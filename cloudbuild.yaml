@@ -45,8 +45,6 @@ steps:
       - '--update-env-vars'
       - 'NODE_ENV=production'
       - '--update-env-vars'
-      - 'PORT=3001'
-      - '--update-env-vars'
       - 'GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID'
       - '--update-env-vars'
       - 'GOOGLE_CLOUD_LOCATION=us-central1'
