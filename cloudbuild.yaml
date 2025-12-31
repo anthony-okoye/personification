@@ -29,7 +29,7 @@ steps:
     id: 'push-image-latest'
 
   # Deploy container image to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  - name: 'gcr.io/google.com'
     entrypoint: gcloud
     args:
       - 'run'
@@ -42,8 +42,9 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      # Note the custom delimiter ^@^ and the @ separators used below
       - '--set-env-vars'
-      - 'NODE_ENV=production,PORT=3001,GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,FRONTEND_URL=http://localhost:3000,https://personification.vercel.app'
+      - '^@^NODE_ENV=production@GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID@GOOGLE_CLOUD_LOCATION=us-central1@FRONTEND_URL=http://localhost:3000,https://personification.vercel.app'
       - '--set-secrets'
       - 'ELEVENLABS_API_KEY=ELEVENLABS_API_KEY:latest,FIRECRAWL_API_KEY=FIRECRAWL_API_KEY:latest'
       - '--memory'
