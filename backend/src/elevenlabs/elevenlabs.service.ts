@@ -12,6 +12,7 @@ export interface AudioResult {
 export class ElevenLabsService {
   private readonly logger = new Logger(ElevenLabsService.name);
   private readonly client: ElevenLabsClient;
+  private readonly voiceId: string;
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('ELEVENLABS_API_KEY');
@@ -19,6 +20,10 @@ export class ElevenLabsService {
     if (!apiKey) {
       this.logger.warn('ELEVENLABS_API_KEY not configured');
     }
+
+    // Get voice ID from config, default to Rachel
+    this.voiceId = this.configService.get<string>('ELEVENLABS_VOICE_ID') || 'EXAVITQu4vr4xnSDxMaL';
+    this.logger.log(`Using voice ID: ${this.voiceId}`);
 
     this.client = new ElevenLabsClient({
       apiKey: apiKey || '',
@@ -35,14 +40,12 @@ export class ElevenLabsService {
         throw new Error('Script cannot be empty');
       }
 
-      // Use a professional voice - Rachel is a clear, professional female voice
-      const voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice ID
-      
-      this.logger.log(`Using voice: Rachel (${voiceId})`);
+      // Use configured voice ID
+      this.logger.log(`Using voice: ${this.voiceId}`);
       this.logger.log(`Calling ElevenLabs API...`);
       
       // Generate speech using ElevenLabs
-      const audioStream = await this.client.textToSpeech.convert(voiceId, {
+      const audioStream = await this.client.textToSpeech.convert(this.voiceId, {
         text: script,
         modelId: 'eleven_turbo_v2', // Fast model for demo purposes
         voiceSettings: {
