@@ -27,6 +27,7 @@ export class ElevenLabsService {
 
   async synthesizeSpeech(script: string): Promise<AudioResult> {
     this.logger.log('Synthesizing speech with ElevenLabs');
+    this.logger.log(`Script length: ${script.length} characters, ${script.split(/\s+/).length} words`);
     
     try {
       // Validate input
@@ -38,6 +39,7 @@ export class ElevenLabsService {
       const voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice ID
       
       this.logger.log(`Using voice: Rachel (${voiceId})`);
+      this.logger.log(`Calling ElevenLabs API...`);
       
       // Generate speech using ElevenLabs
       const audioStream = await this.client.textToSpeech.convert(voiceId, {
@@ -51,12 +53,16 @@ export class ElevenLabsService {
         },
       });
 
+      this.logger.log(`Audio stream received, converting to buffer...`);
+
       // Convert stream to buffer
       const chunks: Buffer[] = [];
       for await (const chunk of audioStream) {
         chunks.push(Buffer.from(chunk));
       }
       const audioBuffer = Buffer.concat(chunks);
+
+      this.logger.log(`Buffer created. Size: ${audioBuffer.length} bytes`);
 
       // Estimate duration based on word count (average speaking rate: 150 words/minute)
       const wordCount = script.split(/\s+/).length;
@@ -69,7 +75,10 @@ export class ElevenLabsService {
         duration: estimatedDuration,
       };
     } catch (error) {
-      this.logger.error('Failed to synthesize speech with ElevenLabs', error);
+      this.logger.error('Failed to synthesize speech with ElevenLabs');
+      this.logger.error(`Error type: ${error.constructor.name}`);
+      this.logger.error(`Error message: ${error.message}`);
+      this.logger.error(`Full error:`, error);
       
       // Handle synthesis failures gracefully
       // Re-throw with a more user-friendly message

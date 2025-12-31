@@ -57,20 +57,27 @@ export class PersonaPipelineService {
       let audioUrl = '';
       
       try {
+        this.logger.log('Calling ElevenLabs service...');
         const audioResult = await this.retryWithBackoff(
           () => this.elevenLabsService.synthesizeSpeech(audioScript),
           'Audio synthesis',
         );
         
+        this.logger.log(`Audio result received. Buffer size: ${audioResult.audioBuffer.length} bytes`);
+        
         // Convert audio buffer to base64 data URL for immediate playback
         const base64Audio = audioResult.audioBuffer.toString('base64');
+        this.logger.log(`Base64 conversion complete. Length: ${base64Audio.length} characters`);
+        
         audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
+        this.logger.log(`Audio URL created. Length: ${audioUrl.length} characters`);
         
         this.logger.log('Audio synthesis complete');
       } catch (audioError) {
         // If audio synthesis fails, log the error but continue
         // The text script will still be returned to the user
         this.logger.error(`Audio synthesis failed: ${audioError.message}`, audioError.stack);
+        this.logger.error(`Full error object:`, JSON.stringify(audioError, null, 2));
         this.logger.warn('Continuing without audio - text script will be provided');
         audioUrl = ''; // Empty URL indicates audio synthesis failed
       }
