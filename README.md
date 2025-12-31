@@ -496,7 +496,7 @@ npm run lint
 
 ## License
 
-UNLICENSED
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
