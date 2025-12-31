@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    # Use GCR image name if GCR_IMAGE is set, otherwise use local name
+    image: ${GCR_IMAGE:-personification-backend}
+    container_name: personification-backend
+    ports:
+      - "3001:3001"
+    # Load all environment variables from backend/.env
+    env_file:
+      - ./backend/.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - personification-network
+
+networks:
+  personification-network:
+    driver: bridge

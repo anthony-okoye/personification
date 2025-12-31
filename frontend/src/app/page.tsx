@@ -186,6 +186,7 @@ export default function PersonaGeneratorPage() {
                 <AudioBriefing
                   audioUrl={state.persona.audioUrl}
                   transcript={state.persona.audioScript}
+                  autoPlay={true}
                 />
               </div>
             </div>

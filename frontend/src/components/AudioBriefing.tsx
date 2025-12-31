@@ -5,9 +5,10 @@ import { useState, useRef, useEffect } from 'react';
 interface AudioBriefingProps {
   audioUrl: string;
   transcript: string;
+  autoPlay?: boolean;
 }
 
-export default function AudioBriefing({ audioUrl, transcript }: AudioBriefingProps) {
+export default function AudioBriefing({ audioUrl, transcript, autoPlay = false }: AudioBriefingProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showTranscript, setShowTranscript] = useState(false);
@@ -26,6 +27,16 @@ export default function AudioBriefing({ audioUrl, transcript }: AudioBriefingPro
       setDuration(audio.duration);
       setIsLoading(false);
       setError(null);
+      
+      // Auto-play if enabled
+      if (autoPlay) {
+        audio.play().then(() => {
+          setIsPlaying(true);
+        }).catch((err) => {
+          console.error('Auto-play failed:', err);
+          // Auto-play might be blocked by browser, that's okay
+        });
+      }
     };
 
     const handleError = () => {
@@ -53,7 +64,7 @@ export default function AudioBriefing({ audioUrl, transcript }: AudioBriefingPro
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [audioUrl]);
+  }, [audioUrl, autoPlay]);
 
   const handlePlayPause = () => {
     const audio = audioRef.current;
