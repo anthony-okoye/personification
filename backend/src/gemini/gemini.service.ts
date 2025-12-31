@@ -517,6 +517,20 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks, just r
       
       // Validate script length (110-150 words for 45-60 seconds)
       const wordCount = this.countWords(script);
+      const charCount = script.length;
+      
+      this.logger.log(`Generated script: ${wordCount} words, ${charCount} characters`);
+      
+      // ElevenLabs has a character limit - enforce max 800 characters to be safe
+      if (charCount > 800) {
+        this.logger.warn(`Script too long (${charCount} chars). Truncating to 800 characters...`);
+        const truncated = script.substring(0, 800).trim();
+        // Try to end at a sentence
+        const lastPeriod = truncated.lastIndexOf('.');
+        const finalScript = lastPeriod > 600 ? truncated.substring(0, lastPeriod + 1) : truncated;
+        this.logger.log(`Truncated script: ${this.countWords(finalScript)} words, ${finalScript.length} characters`);
+        return finalScript;
+      }
       
       if (wordCount < 110 || wordCount > 150) {
         this.logger.warn(`Generated script has ${wordCount} words, expected 110-150. Regenerating...`);
@@ -534,8 +548,18 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks, just r
         const retryText = retryResponse.candidates[0].content.parts[0].text;
         const retryScript = this.cleanAudioScript(retryText);
         const retryWordCount = this.countWords(retryScript);
+        const retryCharCount = retryScript.length;
         
-        this.logger.log(`Retry generated script with ${retryWordCount} words`);
+        this.logger.log(`Retry generated script with ${retryWordCount} words, ${retryCharCount} characters`);
+        
+        // Check character limit on retry too
+        if (retryCharCount > 800) {
+          this.logger.warn(`Retry script too long (${retryCharCount} chars). Truncating...`);
+          const truncated = retryScript.substring(0, 800).trim();
+          const lastPeriod = truncated.lastIndexOf('.');
+          const finalRetryScript = lastPeriod > 600 ? truncated.substring(0, lastPeriod + 1) : truncated;
+          return finalRetryScript;
+        }
         
         // Use retry script if it's better, otherwise use original
         const finalScript = (retryWordCount >= 110 && retryWordCount <= 150) ? retryScript : script;
@@ -571,7 +595,7 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks, just r
 
   private buildAudioScriptPrompt(persona: PersonaResult, previousWordCount?: number): string {
     const wordCountGuidance = previousWordCount 
-      ? `\nIMPORTANT: Your previous attempt had ${previousWordCount} words. Please adjust to be between 110-150 words exactly.`
+      ? `\nIMPORTANT: Your previous attempt had ${previousWordCount} words. Please adjust to be between 110-130 words exactly.`
       : '';
 
     return `Convert this persona into a 45-60 second spoken briefing for a designer.
@@ -579,17 +603,21 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks, just r
 Persona:
 ${JSON.stringify(persona, null, 2)}
 
-Requirements:
+CRITICAL Requirements:
+- MAXIMUM 130 words (strictly enforce this limit!)
+- MAXIMUM 700 characters total
 - Write in second person (address the designer as "you")
 - Use plain language without jargon
 - Be action-oriented (focus on what the designer should do)
 - Highlight the most important design considerations
 - Mention any conflicts between the person's preferences and the brief
 - Keep it conversational and natural for speech
-- Target length: 110-150 words (for 45-60 seconds of speech at normal pace)
+- Target length: 110-130 words (for 45-60 seconds of speech at normal pace)
 - Start with who this persona is, then move to actionable guidance${wordCountGuidance}
 
-Return ONLY the script text with no additional formatting, markdown, or code blocks. Just the raw script that will be spoken.`;
+Return ONLY the script text with no additional formatting, markdown, or code blocks. Just the raw script that will be spoken.
+
+REMEMBER: Keep it under 130 words and 700 characters!`;
   }
 
   private cleanAudioScript(text: string): string {
